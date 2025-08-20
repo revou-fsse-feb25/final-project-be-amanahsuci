@@ -6,10 +6,163 @@
 
 generator client {
   provider = "prisma-client-js"
-  output   = "../generated/prisma"
 }
 
 datasource db {
   provider = "postgresql"
   url      = env("DATABASE_URL")
+}
+
+model Users {
+  id                      Int                     @id @default(autoincrement())
+  name                    String
+  email                   String                  @unique
+  phone                   String?   
+  password                String
+  role                    Role
+  points                  Int                     @default(0)
+  created_at              DateTime                @default(now())
+  updated_at              DateTime                @default(now())
+
+  bookings                Bookings[]
+  points_transactions     Points_Transactions[]
+}
+
+model Movies {
+  id                      Int                      @id @default(autoincrement())
+  title                   String
+  description             String
+  genre                   String
+  rating                  String
+  duration_minutes        Int
+  poster_url              String
+  created_at              DateTime                 @default(now())
+  updated_at              DateTime                 @default(now())
+
+  showtimes               Showtimes[]
+}
+
+model Theaters {
+  id                      Int                      @id @default(autoincrement())
+  name                    String
+  location                String
+  created_at              DateTime                 @default(now())
+
+  cinemas                 Cinemas[]
+}
+
+model Cinemas {
+  id                      Int                      @id @default(autoincrement())
+  theater_id              Int
+  type                    CinemaType
+  total_seats             Int
+  price                   Int
+
+  theater                 Theaters                 @relation(fields: [theater_id], references: [id])
+  showtimes               Showtimes[]
+  seats                   Seats[]
+}
+
+model Showtimes {
+  id                      Int                      @id @default(autoincrement())
+  movie_id                Int
+  cinema_id               Int
+  start_time              DateTime
+
+  movie                   Movies                   @relation(fields: [movie_id], references: [id])
+  cinema                  Cinemas                  @relation(fields: [cinema_id], references: [id])
+  bookings                Bookings[]
+}
+
+model Seats {
+  id                      Int                      @id @default(autoincrement())
+  cinema_id               Int
+  seat_number             String
+
+  cinema                  Cinemas                  @relation(fields: [cinema_id], references: [id])
+  booking_seats           Booking_Seats[]
+}
+
+model Bookings {
+  id                      Int                      @id @default(autoincrement())
+  user_id                 Int
+  showtime_id             Int
+  total_price             Int
+  payment_status          Status
+  created_at              DateTime                 @default(now())
+
+  user                    Users                    @relation(fields: [user_id], references: [id])
+  showtime                Showtimes                @relation(fields: [showtime_id], references: [id])
+  booking_seats           Booking_Seats[]
+  payments                Payments[]
+  points_transactions     Points_Transactions[]                
+}
+
+model Booking_Seats {
+  booking_id              Int
+  seat_id                 Int
+  status                  SeatStatus
+
+  booking                 Bookings                 @relation(fields: [booking_id], references: [id])
+  seat                    Seats                    @relation(fields: [seat_id], references: [id])
+
+  @@id([booking_id, seat_id])
+}
+
+model Payments {
+  id                       Int                     @id @default(autoincrement())
+  booking_id               Int
+  method                   PaymentMethod
+  status                   Status
+  paid_at                  DateTime?
+
+  booking                  Bookings                @relation(fields: [booking_id], references: [id])
+}
+
+model Points_Transactions {
+  id                       Int                     @id @default(autoincrement())
+  user_id                  Int
+  booking_id               Int
+  type                     PointType
+  points                   Int
+  created_at               DateTime                @default(now())
+
+  user                     Users                   @relation(fields: [user_id], references: [id])
+  booking                  Bookings                @relation(fields: [booking_id], references: [id])
+  is_voided                Boolean                 @default(false)
+  voided_at                DateTime?
+  void_reason              String?
+}
+
+enum Role {
+  customer
+  admin
+}
+
+enum CinemaType {
+  Reguler
+  IMAX
+  Premier
+}
+
+enum PaymentMethod {
+  qris
+  e_wallet
+  bank_transfer
+}
+
+enum Status {
+  pending
+  complete
+  cancelled
+}
+
+enum SeatStatus {
+  selected
+  booked
+}
+
+enum PointType {
+  earn
+  redeem
 }
