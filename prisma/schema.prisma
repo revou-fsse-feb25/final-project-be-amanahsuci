@@ -25,7 +25,7 @@ model Users {
   updated_at              DateTime                @default(now())
 
   bookings                Bookings[]
-  points_transactions     Points_Transactions[]
+  Points_Transactions    Points_Transactions[]
 }
 
 model Movies {
@@ -122,16 +122,17 @@ model Payments {
 model Points_Transactions {
   id                       Int                     @id @default(autoincrement())
   user_id                  Int
-  booking_id               Int
+  booking_id               Int?
   type                     PointType
   points                   Int
   created_at               DateTime                @default(now())
 
   user                     Users                   @relation(fields: [user_id], references: [id])
-  booking                  Bookings                @relation(fields: [booking_id], references: [id])
+  booking                  Bookings?               @relation(fields: [booking_id], references: [id])
   is_voided                Boolean                 @default(false)
   voided_at                DateTime?
   void_reason              String?
+
 }
 
 enum Role {

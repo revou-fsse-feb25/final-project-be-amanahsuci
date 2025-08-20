@@ -24,16 +24,18 @@ export class PointsTransactionsService {
       throw new NotFoundException('User not found');
     }
 
-    const booking = await this.prisma.bookings.findUnique({
-      where: { id: booking_id },
-    });
+    if (booking_id) {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { id: booking_id },
+      });
 
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
 
-    if (booking.user_id !== user_id) {
-      throw new BadRequestException('Booking does not belong to this user');
+      if (booking.user_id !== user_id) {
+        throw new BadRequestException('Booking does not belong to this user');
+      }
     }
 
     if (type === 'redeem' && points > user.points) {
@@ -100,7 +102,7 @@ export class PointsTransactionsService {
     });
   }
 
-  async earnPoints(userId: number, points: number, bookingId: number) {
+  async earnPoints(userId: number, points: number, bookingId?: number) {
     if (points <= 0) {
       throw new BadRequestException('Points must be greater than 0');
     }
@@ -113,16 +115,18 @@ export class PointsTransactionsService {
       throw new NotFoundException('User not found');
     }
 
-    const booking = await this.prisma.bookings.findUnique({
-      where: { id: bookingId },
-    });
+    if (bookingId) {
+      const booking = await this.prisma.bookings.findUnique({
+        where: { id: bookingId },
+      });
 
-    if (!booking) {
-      throw new NotFoundException('Booking not found');
-    }
+      if (!booking) {
+        throw new NotFoundException('Booking not found');
+      }
 
-    if (booking.user_id !== userId) {
-      throw new BadRequestException('Booking does not belong to this user');
+      if (booking.user_id !== userId) {
+        throw new BadRequestException('Booking does not belong to this user');
+      }
     }
 
     return this.create({
@@ -420,7 +424,7 @@ export class PointsTransactionsService {
         name: true,
         email: true,
         points: true,
-        points_transactions: {
+        points_Transactions: {
           take: 1,
           orderBy: { created_at: 'desc' },
           select: {
@@ -437,7 +441,7 @@ export class PointsTransactionsService {
       name: user.name,
       email: user.email,
       points: user.points,
-      last_activity: user.points_transactions[0]?.created_at,
+      last_activity: user.points_Transactions[0]?.created_at,
     }));
   }
 

@@ -9,9 +9,9 @@ export class CreatePointsTransactionDto {
     user_id: number;
 
     @IsNumber()
-    @IsNotEmpty()
+    @IsOptional()
     @IsPositive()
-    booking_id: number; 
+    booking_id?: number; 
 
     @IsEnum(PointType, {
         message: 'Type must be either earn or redeem'

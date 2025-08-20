@@ -39,7 +39,7 @@ export class PaymentsService {
             data: {
                 booking_id,
                 method,
-                status,
+                status: Status.pending,
                 paid_at: status === 'complete' ? new Date() : null,
             },
             include: {
@@ -280,7 +280,7 @@ export class PaymentsService {
                 });
     
                 const pointsEarned = Math.floor(existingPayment.booking.total_price / 1000);
-                await this.prisma.points_transactions.create({
+                await this.prisma.points_Transactions.create({
                     data: {
                         user_id: existingPayment.booking.user_id,
                         booking_id: existingPayment.booking_id,

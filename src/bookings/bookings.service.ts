@@ -386,7 +386,7 @@ export class BookingsService {
 
       const pointsEarned = Math.floor(booking.total_price / 1000);
 
-      await prisma.points_transactions.create({
+      await prisma.points_Transactions.create({
         data: {
           user_id: booking.user_id,
           booking_id: bookingId,
