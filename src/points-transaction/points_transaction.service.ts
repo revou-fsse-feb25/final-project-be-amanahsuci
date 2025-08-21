@@ -7,7 +7,7 @@ import {
 import { PrismaService } from '../prisma/prisma.service';
 import { CreatePointsTransactionDto } from './dto/create-points_transaction.dto';
 import { RedeemPointsDto } from './dto/redeem-points.dto';
-import { PointType } from '@prisma/client';
+import { PointType, Prisma } from '@prisma/client';
 
 @Injectable()
 export class PointsTransactionsService {
@@ -38,12 +38,12 @@ export class PointsTransactionsService {
       }
     }
 
-    if (type === 'redeem' && points > user.points) {
-      throw new BadRequestException('Insufficient points for redemption');
-    }
-
     if (points <= 0) {
       throw new BadRequestException('Points must be greater than 0');
+    }
+
+    if (type === PointType.redeem && points > user.points) {
+      throw new BadRequestException('Insufficient points for redemption');
     }
 
     return await this.prisma.$transaction(async (prisma) => {
@@ -52,7 +52,7 @@ export class PointsTransactionsService {
           user_id,
           booking_id,
           type,
-          points: type === 'earn' ? points : -points,
+          points: type === PointType.earn ? points : -points,
           created_at: created_at || new Date(),
         },
         include: {
@@ -88,7 +88,7 @@ export class PointsTransactionsService {
         },
       });
 
-      const pointsChange = type === 'earn' ? points : -points;
+      const pointsChange = type === PointType.earn ? points : -points;
       await prisma.users.update({
         where: { id: user_id },
         data: {
@@ -132,7 +132,7 @@ export class PointsTransactionsService {
     return this.create({
       user_id: userId,
       booking_id: bookingId,
-      type: 'earn',
+      type: PointType.earn,
       points,
     });
   }
@@ -171,7 +171,7 @@ export class PointsTransactionsService {
     return this.create({
       user_id: userId,
       booking_id,
-      type: 'redeem',
+      type: PointType.redeem,
       points,
     });
   }
@@ -183,38 +183,40 @@ export class PointsTransactionsService {
 
     const skip = (page - 1) * limit;
     
-    const whereCondition: any = {};
+    const whereCondition: Prisma.Points_TransactionsWhereInput = {};
 
     if (userId) whereCondition.user_id = userId;
     if (type) whereCondition.type = type;
 
-    const [transactions, total] = await Promise.all([
-      this.prisma.points_Transactions.findMany({
-        where: whereCondition,
-        skip,
-        take: limit,
-        include: {
-          user: {
-            select: {
-              name: true,
-              email: true,
+    try {
+      const [transactions, total] = await Promise.all([
+        this.prisma.points_Transactions.findMany({
+          where: whereCondition,
+          skip,
+          take: limit,
+          include: {
+            user: {
+              select: {
+                name: true,
+                email: true,
+              },
             },
-          },
-          booking: {
-            include: {
-              showtime: {
-                include: {
-                  movie: {
-                    select: {
-                      title: true,
+            booking: {
+              include: {
+                showtime: {
+                  include: {
+                    movie: {
+                      select: {
+                        title: true,
+                      },
                     },
-                  },
-                  cinema: {
-                    include: {
-                      theater: {
-                        select: {
-                          name: true,
-                          location: true,
+                    cinema: {
+                      include: {
+                        theater: {
+                          select: {
+                            name: true,
+                            location: true,
+                          },
                         },
                       },
                     },
@@ -223,26 +225,33 @@ export class PointsTransactionsService {
               },
             },
           },
-        },
-        orderBy: { created_at: 'desc' },
-      }),
-      this.prisma.points_Transactions.count({ where: whereCondition }),
-    ]);
+          orderBy: { created_at: 'desc' },
+        }),
+        this.prisma.points_Transactions.count({ where: whereCondition }),
+      ]);
 
-    return {
-      data: transactions,
-      meta: {
-        page,
-        limit,
-        total,
-        totalPages: Math.ceil(total / limit),
-        hasNext: page < Math.ceil(total / limit),
-        hasPrev: page > 1,
-      },
-    };
+      return {
+        data: transactions,
+        meta: {
+          page,
+          limit,
+          total,
+          totalPages: Math.ceil(total / limit),
+          hasNext: page < Math.ceil(total / limit),
+          hasPrev: page > 1,
+        },
+      };
+    } catch (error) {
+      console.error('Error in findAll:', error);
+      throw new BadRequestException('Failed to fetch transactions');
+    }
   }
 
   async findOne(id: number) {
+    if (!id || id <= 0) {
+      throw new BadRequestException('Invalid transaction ID');
+    }
+
     const transaction = await this.prisma.points_Transactions.findUnique({
       where: { id },
       include: {
@@ -280,6 +289,10 @@ export class PointsTransactionsService {
   }
 
   async findByUser(userId: number, page: number = 1, limit: number = 10) {
+    if (!userId || userId <= 0) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
     });
@@ -292,6 +305,10 @@ export class PointsTransactionsService {
   }
 
   async getUserPointsSummary(userId: number) {
+    if (!userId || userId <= 0) {
+      throw new BadRequestException('Invalid user ID');
+    }
+
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
       select: {
@@ -305,47 +322,49 @@ export class PointsTransactionsService {
       throw new NotFoundException('User not found');
     }
 
-    const [totalEarned, totalRedeemed, recentTransactions] = await Promise.all([
-      this.prisma.points_Transactions.aggregate({
-        where: {
-          user_id: userId,
-          type: 'earn',
-        },
-        _sum: {
-          points: true,
-        },
-      }),
-      this.prisma.points_Transactions.aggregate({
-        where: {
-          user_id: userId,
-          type: 'redeem',
-        },
-        _sum: {
-          points: true,
-        },
-      }),
-      this.prisma.points_Transactions.findMany({
-        where: {
-          user_id: userId,
-        },
-        take: 5,
-        orderBy: { created_at: 'desc' },
-        include: {
-          booking: {
-            include: {
-              showtime: {
-                include: {
-                  movie: {
-                    select: {
-                      title: true,
+    try {
+      const [totalEarned, totalRedeemed, recentTransactions] = await Promise.all([
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            user_id: userId,
+            type: PointType.earn,
+          },
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            user_id: userId,
+            type: PointType.redeem,
+          },
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.points_Transactions.findMany({
+          where: {
+            user_id: userId,
+          },
+          take: 5,
+          orderBy: { created_at: 'desc' },
+          include: {
+            booking: {
+              include: {
+                showtime: {
+                  include: {
+                    movie: {
+                      select: {
+                        title: true,
+                      },
                     },
-                  },
-                  cinema: {
-                    include: {
-                      theater: {
-                        select: {
-                          name: true,
-                          location: true,
+                    cinema: {
+                      include: {
+                        theater: {
+                          select: {
+                            name: true,
+                            location: true,
+                          },
                         },
                       },
                     },
@@ -354,100 +373,146 @@ export class PointsTransactionsService {
               },
             },
           },
-        },
-      }),
-    ]);
+        }),
+      ]);
 
-    return {
-      user,
-      summary: {
-        current_points: user.points,
-        total_earned: totalEarned._sum.points || 0,
-        total_redeemed: Math.abs(totalRedeemed._sum.points || 0),
-        net_points: (totalEarned._sum.points || 0) + (totalRedeemed._sum.points || 0),
-      },
-      recent_transactions: recentTransactions,
-    };
+      return {
+        user,
+        summary: {
+          current_points: user.points,
+          total_earned: totalEarned._sum.points || 0,
+          total_redeemed: Math.abs(totalRedeemed._sum.points || 0),
+          net_points: (totalEarned._sum.points || 0) + (totalRedeemed._sum.points || 0),
+        },
+        recent_transactions: recentTransactions,
+      };
+    } catch (error) {
+      console.error('Error in getUserPointsSummary:', error);
+      throw new BadRequestException('Failed to get user points summary');
+    }
   }
 
   async getSystemWidePointsStats() {
-    const [totalUsers, totalPoints, totalTransactions, pointsByType] = await Promise.all([
-      this.prisma.users.count({
+    try {
+      const [totalUsers, totalPoints, totalTransactions] = await Promise.all([
+        this.prisma.users.count({
+          where: {
+            points: {
+              gt: 0,
+            },
+          },
+        }),
+        this.prisma.users.aggregate({
+          _sum: {
+            points: true,
+          },
+        }),
+        this.prisma.points_Transactions.count(),
+      ]);
+
+      const [earnedStats, redeemedStats] = await Promise.all([
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            type: PointType.earn,
+          },
+          _sum: {
+            points: true,
+          },
+          _count: {
+            id: true,
+          },
+        }),
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            type: PointType.redeem,
+          },
+          _sum: {
+            points: true,
+          },
+          _count: {
+            id: true,
+          },
+        }),
+      ]);
+
+      const totalSystemPoints = totalPoints._sum.points || 0;
+      const earnedPoints = earnedStats._sum.points || 0;
+      const redeemedPoints = Math.abs(redeemedStats._sum.points || 0);
+
+      return {
+        total_users_with_points: totalUsers,
+        total_points_in_system: totalSystemPoints,
+        total_transactions: totalTransactions,
+        earned_points: earnedPoints,
+        earned_transactions: earnedStats._count.id,
+        redeemed_points: redeemedPoints,
+        redeemed_transactions: redeemedStats._count.id,
+        points_circulation_ratio: totalSystemPoints > 0 ? 
+          (redeemedPoints / totalSystemPoints) * 100 : 0,
+      };
+    } catch (error) {
+      console.error('Error in getSystemWidePointsStats:', error);
+      throw new BadRequestException('Failed to get system stats');
+    }
+  }
+
+  async getTopUsers(limit: number = 10) {
+    if (limit <= 0 || limit > 100) {
+      throw new BadRequestException('Limit must be between 1 and 100');
+    }
+
+    try {
+      const topUsers = await this.prisma.users.findMany({
         where: {
           points: {
             gt: 0,
           },
         },
-      }),
-      this.prisma.users.aggregate({
-        _sum: {
-          points: true,
-        },
-      }),
-      this.prisma.points_Transactions.count(),
-      this.prisma.points_Transactions.groupBy({
-        by: ['type'],
-        _sum: {
-          points: true,
-        },
-        _count: {
+        select: {
           id: true,
-        },
-      }),
-    ]);
-
-    const earned = pointsByType.find(item => item.type === 'earn');
-    const redeemed = pointsByType.find(item => item.type === 'redeem');
-
-    return {
-      total_users_with_points: totalUsers,
-      total_points_in_system: totalPoints._sum.points || 0,
-      total_transactions: totalTransactions,
-      earned_points: earned?._sum.points || 0,
-      earned_transactions: earned?._count.id || 0,
-      redeemed_points: Math.abs(redeemed?._sum.points || 0),
-      redeemed_transactions: redeemed?._count.id || 0,
-      points_circulation_ratio: totalPoints._sum.points ? 
-        (Math.abs(redeemed?._sum.points || 0) / totalPoints._sum.points) * 100 : 0,
-    };
-  }
-
-  async getTopUsers(limit: number = 10) {
-    const topUsers = await this.prisma.users.findMany({
-      where: {
-        points: {
-          gt: 0,
-        },
-      },
-      select: {
-        id: true,
-        name: true,
-        email: true,
-        points: true,
-        points_Transactions: {
-          take: 1,
-          orderBy: { created_at: 'desc' },
-          select: {
-            created_at: true,
+          name: true,
+          email: true,
+          points: true,
+          Points_Transactions: {
+            take: 1,
+            orderBy: { created_at: 'desc' },
+            select: {
+              created_at: true,
+            },
           },
         },
-      },
-      orderBy: { points: 'desc' },
-      take: limit,
-    });
+        orderBy: { points: 'desc' },
+        take: limit,
+      });
 
-    return topUsers.map(user => ({
-      id: user.id,
-      name: user.name,
-      email: user.email,
-      points: user.points,
-      last_activity: user.points_Transactions[0]?.created_at,
-    }));
+      return topUsers.map(user => ({
+        id: user.id,
+        name: user.name,
+        email: user.email,
+        points: user.points,
+        last_activity: user.Points_Transactions[0]?.created_at || null,
+      }));
+    } catch (error) {
+      console.error('Error in getTopUsers:', error);
+      throw new BadRequestException('Failed to get top users');
+    }
   }
 
   async voidTransaction(id: number) {
+    if (!id || id <= 0) {
+      throw new BadRequestException('Invalid transaction ID');
+    }
+
     const transaction = await this.prisma.points_Transactions.findUnique({
       where: { id },
+      include: {
+        user: {
+          select: {
+            id: true,
+            points: true,
+          },
+        },
+      },
     });
 
     if (!transaction) {
@@ -461,25 +526,106 @@ export class PointsTransactionsService {
       throw new BadRequestException('Cannot void transaction older than 30 days');
     }
 
-    return await this.prisma.$transaction(async (prisma) => {
-      const pointsChange = -transaction.points;
-      await prisma.users.update({
-        where: { id: transaction.user_id },
-        data: {
-          points: {
-            increment: pointsChange,
-          },
-        },
-      });
+    if (transaction.type === PointType.redeem) {
+      const pointsToRestore = Math.abs(transaction.points);
+    } else if (transaction.type === PointType.earn) {
+      const pointsToDeduct = transaction.points;
+      if (transaction.user.points < pointsToDeduct) {
+        throw new BadRequestException('User has insufficient points to void this transaction');
+      }
+    }
 
-      await prisma.points_Transactions.delete({
-        where: { id },
+    try {
+      return await this.prisma.$transaction(async (prisma) => {
+        const pointsChange = -transaction.points;
+        
+        await prisma.users.update({
+          where: { id: transaction.user_id },
+          data: {
+            points: {
+              increment: pointsChange,
+            },
+          },
+        });
+
+        await prisma.points_Transactions.delete({
+          where: { id },
+        });
+
+        return {
+          message: 'Transaction voided successfully',
+          points_adjusted: pointsChange,
+          transaction_type: transaction.type,
+          original_points: transaction.points,
+        };
       });
+    } catch (error) {
+      console.error('Error in voidTransaction:', error);
+      throw new BadRequestException('Failed to void transaction');
+    }
+  }
+
+  async getMonthlyStats(year: number, month: number) {
+    if (year < 2020 || year > 2030) {
+      throw new BadRequestException('Invalid year');
+    }
+    if (month < 1 || month > 12) {
+      throw new BadRequestException('Invalid month');
+    }
+
+    const startDate = new Date(year, month - 1, 1);
+    const endDate = new Date(year, month, 0, 23, 59, 59);
+
+    try {
+      const [earnedStats, redeemedStats, totalTransactions] = await Promise.all([
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            type: PointType.earn,
+            created_at: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          _sum: { points: true },
+          _count: { id: true },
+        }),
+        this.prisma.points_Transactions.aggregate({
+          where: {
+            type: PointType.redeem,
+            created_at: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+          _sum: { points: true },
+          _count: { id: true },
+        }),
+        this.prisma.points_Transactions.count({
+          where: {
+            created_at: {
+              gte: startDate,
+              lte: endDate,
+            },
+          },
+        }),
+      ]);
 
       return {
-        message: 'Transaction voided successfully',
-        points_adjusted: pointsChange,
+        period: `${year}-${month.toString().padStart(2, '0')}`,
+        total_transactions: totalTransactions,
+        earned: {
+          points: earnedStats._sum.points || 0,
+          transactions: earnedStats._count.id,
+        },
+        redeemed: {
+          points: Math.abs(redeemedStats._sum.points || 0),
+          transactions: redeemedStats._count.id,
+        },
+        net_points: (earnedStats._sum.points || 0) + (redeemedStats._sum.points || 0),
       };
-    });
+    } catch (error) {
+      console.error('Error in getMonthlyStats:', error);
+      throw new BadRequestException('Failed to get monthly stats');
+    }
   }
 }

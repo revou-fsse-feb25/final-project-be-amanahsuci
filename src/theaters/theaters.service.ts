@@ -48,8 +48,8 @@ export class TheatersService {
     
     const whereCondition = search ? {
       OR: [
-        { name: { contains: search, mode: 'insensitive' } },
-        { location: { contains: search, mode: 'insensitive' } },
+        { name: { contains: search, mode: 'insensitive' as const } },
+        { location: { contains: search, mode: 'insensitive' as const } },
       ],
     } : {};
 
@@ -169,7 +169,7 @@ export class TheatersService {
       });
 
       return updatedTheater;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Theater not found');
       }
@@ -181,14 +181,9 @@ export class TheatersService {
     const theater = await this.prisma.theaters.findUnique({
       where: { id },
       include: {
-        cinemas: {
-          include: {
-            _count: {
-              select: {
-                showtimes: true,
-                seats: true,
-              },
-            },
+        _count: {
+          select: {
+            cinemas: true,
           },
         },
       },
@@ -198,7 +193,7 @@ export class TheatersService {
       throw new NotFoundException('Theater not found');
     }
 
-    if (theater.cinemas.length > 0) {
+    if (theater._count.cinemas > 0) {
       throw new BadRequestException('Cannot delete theater with existing cinemas');
     }
 
@@ -208,7 +203,7 @@ export class TheatersService {
       });
 
       return { message: 'Theater deleted successfully' };
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Theater not found');
       }
@@ -403,7 +398,7 @@ export class TheatersService {
       });
 
       return updatedCinema;
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Cinema not found');
       }
@@ -419,7 +414,6 @@ export class TheatersService {
           select: {
             showtimes: true,
             seats: true,
-            bookings: true,
           },
         },
       },
@@ -433,7 +427,16 @@ export class TheatersService {
       throw new BadRequestException('Cannot delete cinema with active showtimes');
     }
 
-    if (cinema._count.bookings > 0) {
+    // Check for bookings through showtimes
+    const bookingsCount = await this.prisma.bookings.count({
+      where: {
+        showtime: {
+          cinema_id: id,
+        },
+      },
+    });
+
+    if (bookingsCount > 0) {
       throw new BadRequestException('Cannot delete cinema with existing bookings');
     }
 
@@ -447,7 +450,7 @@ export class TheatersService {
       });
 
       return { message: 'Cinema deleted successfully' };
-    } catch (error) {
+    } catch (error: any) {
       if (error.code === 'P2025') {
         throw new NotFoundException('Cinema not found');
       }
@@ -464,15 +467,12 @@ export class TheatersService {
               start_time: {
                 gte: new Date(),
               },
+              ...(movieId && { movie_id: movieId }),
             },
           },
         },
       },
     };
-
-    if (movieId) {
-      whereCondition.cinemas.some.showtimes.some.movie_id = movieId;
-    }
 
     const theaters = await this.prisma.theaters.findMany({
       where: whereCondition,
