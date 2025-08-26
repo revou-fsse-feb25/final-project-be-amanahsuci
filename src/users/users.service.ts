@@ -17,7 +17,6 @@ export class UsersService {
   async create(createUserDto: CreateUserDto) {
     const { email, password, name, phone, role = Role.customer } = createUserDto;
 
-    // Check if user already exists
     const existingUser = await this.prisma.users.findUnique({
       where: { email },
     });
@@ -26,10 +25,8 @@ export class UsersService {
       throw new ConflictException('User with this email already exists');
     }
 
-    // Hash password
     const hashedPassword = await bcrypt.hash(password, 12);
     
-    // Create new user
     const newUser = await this.prisma.users.create({
       data: {
         email,
@@ -55,14 +52,12 @@ export class UsersService {
   }
 
   async findAll(page: number = 1, limit: number = 10, search?: string) {
-    // Validation
     if (page < 1) throw new BadRequestException('Page must be greater than 0');
     if (limit < 1) throw new BadRequestException('Limit must be greater than 0');
     if (limit > 100) throw new BadRequestException('Limit cannot exceed 100');
 
     const skip = (page - 1) * limit;
     
-    // Build where condition with proper typing
     let whereCondition: Prisma.UsersWhereInput = {};
     
     if (search && typeof search === 'string' && search.trim().length > 0) {
@@ -86,7 +81,6 @@ export class UsersService {
     }
 
     try {
-      // Execute queries in parallel
       const [users, total] = await Promise.all([
         this.prisma.users.findMany({
           where: whereCondition,
@@ -244,7 +238,6 @@ export class UsersService {
       throw new NotFoundException('User not found');
     }
 
-    // Check if email is being changed to an existing email
     if (updateUserDto.email && updateUserDto.email !== existingUser.email) {
       const emailToCheck = updateUserDto.email.toLowerCase().trim();
       const userWithEmail = await this.prisma.users.findUnique({
@@ -256,13 +249,11 @@ export class UsersService {
       }
     }
 
-    // Hash password if provided
     let hashedPassword: string | undefined;
     if (updateUserDto.password) {
       hashedPassword = await bcrypt.hash(updateUserDto.password, 12);
     }
 
-    // Build update data with better type safety
     const updateData: Prisma.UsersUpdateInput = {
       ...(updateUserDto.name !== undefined && { name: updateUserDto.name }),
       ...(updateUserDto.email !== undefined && { 
@@ -347,7 +338,6 @@ export class UsersService {
     }
   }
 
-  // Bonus methods
   async getProfile(id: number) {
     return this.findOne(id);
   }
@@ -434,7 +424,6 @@ export class UsersService {
     }
   }
 
-  // Utility method to get user statistics
   async getUserStats(id: number) {
     if (!id || id <= 0) {
       throw new BadRequestException('Invalid user ID');
