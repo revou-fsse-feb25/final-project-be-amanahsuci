@@ -10,7 +10,14 @@ import { PrismaService } from '../prisma/prisma.service';
 import { LoginDto } from './dto/login.dto';
 import { RegisterDto } from './dto/register.dto';
 import { AuthResponse, JwtPayload } from './types/auth';
+import { AuthResponseDto } from './dto/auth-response.dto';
+import { 
+    ApiOperation, 
+    ApiResponse, 
+    ApiTags 
+} from '@nestjs/swagger';
 
+@ApiTags('Auth Service')
 @Injectable()
 export class AuthService {
     constructor(
@@ -18,6 +25,10 @@ export class AuthService {
         private jwtService: JwtService,
     ) {}
 
+    @ApiOperation({ summary: 'Register a new user (service)' })
+    @ApiResponse({ status: 201, description: 'User successfully registered', type: AuthResponseDto })
+    @ApiResponse({ status: 400, description: 'Passwords do not match or bad request' })
+    @ApiResponse({ status: 409, description: 'User already exists' })
     async register(registerDto: RegisterDto): Promise<AuthResponse> {
         const { name, email, phone, password, confirmPassword } = registerDto;
 
@@ -70,6 +81,9 @@ export class AuthService {
         };
     }
 
+    @ApiOperation({ summary: 'Login user (service)' })
+    @ApiResponse({ status: 200, description: 'Successfully logged in', type: AuthResponseDto })
+    @ApiResponse({ status: 401, description: 'Invalid credentials' })
     async login(loginDto: LoginDto): Promise<AuthResponse> {
         const { email, password } = loginDto;
 
@@ -108,6 +122,9 @@ export class AuthService {
         };
     }
 
+    @ApiOperation({ summary: 'Validate user by ID (service)' })
+    @ApiResponse({ status: 200, description: 'User found' })
+    @ApiResponse({ status: 401, description: 'User not found or unauthorized' })
     async validateUser(userId: number) {
         const user = await this.prisma.users.findUnique({
             where: { id: userId },
@@ -128,6 +145,8 @@ export class AuthService {
         return user;
     }
 
+    @ApiOperation({ summary: 'Get profile (service)' })
+    @ApiResponse({ status: 200, description: 'Return user profile' })
     async getProfile(userId: number) {
         return this.validateUser(userId);
     }

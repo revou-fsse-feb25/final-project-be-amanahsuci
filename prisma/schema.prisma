@@ -154,7 +154,7 @@ enum PaymentMethod {
 
 enum Status {
   pending
-  complete
+  completed
   cancelled
 }
 
