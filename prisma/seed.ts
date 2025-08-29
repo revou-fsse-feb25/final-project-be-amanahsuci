@@ -60,7 +60,8 @@ async function main() {
                 genre: 'Adventure, Drama',
                 rating: '13+',
                 duration_minutes: 181,
-                poster_url: '/images/NowShowing/Avengers_poster.jpg',
+                poster_url:
+                'https://m.media-amazon.com/images/I/7103d-g1quL._UF894,1000_QL80_.jpg',
             },
         }),
         prisma.movies.create({
@@ -71,7 +72,8 @@ async function main() {
                 genre: 'Action, Criminal',
                 rating: '17+',
                 duration_minutes: 125,
-                poster_url: '/images/NowShowing/Ballerina_poster.jpg',
+                poster_url:
+                'https://m.media-amazon.com/images/M/MV5BNzdhZmY2OTQtYWI4OC00ZThkLTlhZjAtNzE2YzRjM2Q5YjJlXkEyXkFqcGc@._V1_FMjpg_UX1000_.jpg',
             },
         }),
         prisma.movies.create({
@@ -82,7 +84,8 @@ async function main() {
                 genre: 'Horror, Thriller',
                 rating: '17+',
                 duration_minutes: 125,
-                poster_url: '/images/NowShowing/Conjuring_poster.jpg',
+                poster_url:
+                'https://asset.kompas.com/crops/V26MMMa_y89CpTjwEwsToRd190A=/108x912:972x1488/750x500/data/photo/2024/07/11/668f651b63781.jpg',
             },
         }),
         prisma.movies.create({
@@ -93,7 +96,8 @@ async function main() {
                 genre: 'Adventure, Drama',
                 rating: '13+',
                 duration_minutes: 120,
-                poster_url: '/images/NowShowing/Drifting_Home_Poster.jpg',
+                poster_url:
+                'https://i.pinimg.com/736x/c0/34/f1/c034f1f821236a2e0e3297fa2c350eff.jpg',
             },
         }),
         prisma.movies.create({
@@ -104,7 +108,8 @@ async function main() {
                 genre: 'Action, Thriller',
                 rating: '17+',
                 duration_minutes: 101,
-                poster_url: '/images/NowShowing/John_wick_poster.jpg',
+                poster_url:
+                'https://i.pinimg.com/736x/ef/1b/1b/ef1b1bdd4b146d4c3bde84bd589d84b5.jpg',
             },
         }),
         prisma.movies.create({
@@ -115,7 +120,8 @@ async function main() {
                 genre: 'Adventure, Drama',
                 rating: '13+',
                 duration_minutes: 125,
-                poster_url: '/images/NowShowing/Lima_cm_poster.jpg',
+                poster_url:
+                'https://upload.wikimedia.org/wikipedia/id/f/f9/5_cm_%28poster%29.jpg',
             },
         }),
         prisma.movies.create({
@@ -126,7 +132,8 @@ async function main() {
                 genre: 'Adventure, Animation, Musical',
                 rating: 'G',
                 duration_minutes: 118,
-                poster_url: '/images/NowShowing/Mufasa_poster.jpg',
+                poster_url:
+                'https://encrypted-tbn0.gstatic.com/images?q=tbn:ANd9GcRxkE1nfGoe7P1bH2XlunM23QV55ZIRa35t3g&s',
             },
         }),
         prisma.movies.create({
@@ -137,7 +144,8 @@ async function main() {
                 genre: 'Horror, Thriller',
                 rating: '17+',
                 duration_minutes: 86,
-                poster_url: '/images/NowShowing/Paranormal_activity_poster.jpg',
+                poster_url:
+                'https://ih1.redbubble.net/image.2435385138.8791/flat,750x,075,f-pad,750x1000,f8f8f8.jpg',
             },
         }),
         prisma.movies.create({
@@ -148,7 +156,8 @@ async function main() {
                 genre: 'Horror, Thriller',
                 rating: '17+',
                 duration_minutes: 107,
-                poster_url: '/images/NowShowing/Pengabdi_Setan_poster.jpg',
+                poster_url:
+                'https://image.tmdb.org/t/p/original/mxA8WkvHXV9IIfq0apvPgYpeIPy.jpg',
             },
         }),
         prisma.movies.create({
@@ -159,7 +168,8 @@ async function main() {
                 genre: 'Action, Animation, Comedy',
                 rating: '11+',
                 duration_minutes: 110,
-                poster_url: '/images/NowShowing/Spy_X_Family_poster.png',
+                poster_url:
+                'https://m.media-amazon.com/images/M/MV5BNDIyMzM4NDgtMzA4Mi00ODFhLThjOTItYjk1N2RkZWViMTJmXkEyXkFqcGc@._V1_.jpg',
             },
         }),
         prisma.movies.create({
@@ -170,7 +180,7 @@ async function main() {
                 genre: 'Adventure, Animation, Drama',
                 rating: '14+',
                 duration_minutes: 101,
-                poster_url: '/images/NowShowing/Stampede_poster.jpg',
+                poster_url: 'https://id-test-11.slatic.net/p/d3865882d7234f40d481389d2101ddea.jpg',
             },
         }),
         prisma.movies.create({
@@ -181,56 +191,34 @@ async function main() {
                 genre: 'Horror, Thriller',
                 rating: '21+',
                 duration_minutes: 125,
-                poster_url: '/images/NowShowing/Terrifier_poster.jpg',
+                poster_url:
+                'https://upload.wikimedia.org/wikipedia/en/5/51/Terrifier_3_poster.jpg',
             },
         }),
     ]);
 
     const theaters = await Promise.all([
-        prisma.theaters.create({
-            data: {
-                name: 'CinemaXX Padang',
-                location: 'Plaza Andalas',
-            },
-        }),
-        prisma.theaters.create({
-            data: {
-                name: 'Cineklex Padang', 
-                location: 'BASKO Mall',
-            },
-        }),
+        prisma.theaters.create({ data: { name: 'CinemaXX Padang', location: 'Plaza Andalas' } }),
+        prisma.theaters.create({ data: { name: 'Cineklex Padang', location: 'BASKO Mall' } }),
     ]);
 
-    const cinemaTypeConfigs: Array<{
-        type: CinemaType;
-        price: number;
-        rows: number;
-        seatsPerRow: number;
-    }> = [
+    const cinemaTypeConfigs: Array<{ type: CinemaType; price: number; rows: number; seatsPerRow: number }> = [
         { type: 'Reguler', rows: 10, seatsPerRow: 12, price: 45_000 },
         { type: 'IMAX', rows: 8, seatsPerRow: 10, price: 65_000 },
         { type: 'Premier', rows: 6, seatsPerRow: 6, price: 85_000 },
     ];
 
-    const cinemas: Array<{
-        id: number;
-        type: CinemaType;
-        theater_id: number;
-        total_seats: number;
-        price: number;
-        rows: number;
-        seatsPerRow: number;
-    }> = [];
+    const cinemas: Array<{ id: number; type: CinemaType; theater_id: number; total_seats: number; price: number; rows: number; seatsPerRow: number }> = [];
 
     for (const theater of theaters) {
         for (const config of cinemaTypeConfigs) {
-            const totalSeats = config.rows * config.seatsPerRow; 
+            const totalSeats = config.rows * config.seatsPerRow;
             const cinema = await prisma.cinemas.create({
                 data: {
-                    theater_id: theater.id,
-                    type: config.type,
-                    total_seats: totalSeats,
-                    price: config.price,
+                theater_id: theater.id,
+                type: config.type,
+                total_seats: totalSeats,
+                price: config.price,
                 },
             });
 
@@ -248,21 +236,13 @@ async function main() {
 
     for (const cinema of cinemas) {
         const seats: { cinema_id: number; seat_number: string }[] = [];
-
         for (let row = 0; row < cinema.rows; row++) {
             const rowLetter = String.fromCharCode(65 + row);
             for (let seatNum = 1; seatNum <= cinema.seatsPerRow; seatNum++) {
-                seats.push({
-                    cinema_id: cinema.id,
-                    seat_number: `${rowLetter}${seatNum}`,
-                });
+                seats.push({ cinema_id: cinema.id, seat_number: `${rowLetter}${seatNum}` });
             }
         }
-
-        await prisma.seats.createMany({
-            data: seats,
-            skipDuplicates: true, 
-        });
+        await prisma.seats.createMany({ data: seats, skipDuplicates: true });
     }
 
     const showtimeConfigs: Record<CinemaType, string[]> = {
@@ -281,7 +261,6 @@ async function main() {
         for (const movie of movies) {
             for (const cinema of cinemas) {
                 const timeSlots = showtimeConfigs[cinema.type];
-
                 for (const timeSlot of timeSlots) {
                     const [hours, minutes] = timeSlot.split(':');
                     const startTime = new Date(showDate);
@@ -289,9 +268,9 @@ async function main() {
 
                     const showtime = await prisma.showtimes.create({
                         data: {
-                            movie_id: movie.id,
-                            cinema_id: cinema.id,
-                            start_time: startTime,
+                        movie_id: movie.id,
+                        cinema_id: cinema.id,
+                        start_time: startTime,
                         },
                         select: { id: true, cinema_id: true },
                     });
@@ -307,13 +286,11 @@ async function main() {
     for (let i = 0; i < 15; i++) {
         const randomUser = users[Math.floor(Math.random() * users.length)];
         const randomShowtime = showtimes[Math.floor(Math.random() * showtimes.length)];
-
         const cinema = cinemas.find((c) => c.id === randomShowtime.cinema_id);
         if (!cinema) continue;
 
         const numSeats = Math.floor(Math.random() * 4) + 1;
         const totalPrice = cinema.price * numSeats;
-
         const r = Math.random();
         const paymentStatus = r > 0.2 ? 'complete' : r > 0.1 ? 'pending' : 'cancelled';
 
@@ -325,7 +302,9 @@ async function main() {
                 payment_status: paymentStatus,
                 created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
             },
-            select: { id: true, showtime_id: true, payment_status: true, created_at: true },
+            select: { 
+                id: true, showtime_id: true, payment_status: true, created_at: true 
+            },
         });
         sampleBookings.push(booking);
 
@@ -342,7 +321,9 @@ async function main() {
         if (seatsBatch.length < numSeats) {
             const needed = numSeats - seatsBatch.length;
             const extra = await prisma.seats.findMany({
-                where: { cinema_id: randomShowtime.cinema_id },
+                where: { 
+                    cinema_id: randomShowtime.cinema_id 
+                },
                 orderBy: { id: 'asc' },
                 take: needed,
             });
@@ -371,7 +352,6 @@ async function main() {
 
         if (booking.payment_status === 'complete') {
             const pointsEarned = Math.floor(totalPrice / 1000);
-            
             await prisma.points_Transactions.create({
                 data: {
                     user_id: randomUser.id,
@@ -380,7 +360,6 @@ async function main() {
                     points: pointsEarned,
                 },
             });
-
             await prisma.users.update({
                 where: { id: randomUser.id },
                 data: { points: { increment: pointsEarned } },
@@ -390,10 +369,10 @@ async function main() {
 }
 
 main()
-    .catch((e) => {
-        console.error(e);
-        process.exit(1);
-    })
-    .finally(async () => {
-        await prisma.$disconnect();
-    });
+.catch((e) => {
+    console.error(e);
+    process.exit(1);
+})
+.finally(async () => {
+    await prisma.$disconnect();
+});

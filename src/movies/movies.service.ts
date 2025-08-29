@@ -15,7 +15,6 @@ export class MoviesService {
   async create(createMovieDto: CreateMovieDto) {
     const { title, description, genre, rating, duration_minutes, poster_url } = createMovieDto;
 
-    // Check if movie with same title already exists
     const existingMovie = await this.prisma.movies.findFirst({
       where: { title },
     });
@@ -83,7 +82,7 @@ export class MoviesService {
             },
             where: {
               start_time: {
-                gte: new Date(), // Only future showtimes
+                gte: new Date(), 
               },
             },
             orderBy: { start_time: 'asc' },
@@ -161,7 +160,7 @@ export class MoviesService {
       throw new NotFoundException('Movie not found');
     }
 
-    // Check if title is being changed to an existing title
+    // check if title is being changed to an existing title
     if (updateMovieDto.title && updateMovieDto.title !== existingMovie.title) {
       const movieWithTitle = await this.prisma.movies.findFirst({
         where: { title: updateMovieDto.title },
@@ -199,7 +198,7 @@ export class MoviesService {
       throw new NotFoundException('Movie not found');
     }
 
-    // Check if movie has showtimes
+    // check if movie has showtimes
     const showtimesCount = await this.prisma.showtimes.count({
       where: { movie_id: id },
     });

@@ -229,7 +229,6 @@ export class UsersService {
       throw new BadRequestException('Invalid user ID');
     }
 
-    // Check if user exists
     const existingUser = await this.prisma.users.findUnique({
       where: { id },
     });
@@ -302,7 +301,6 @@ export class UsersService {
       throw new BadRequestException('Invalid user ID');
     }
 
-    // Check if user exists
     const user = await this.prisma.users.findUnique({
       where: { id },
     });
@@ -351,7 +349,6 @@ export class UsersService {
       throw new BadRequestException('Points must be greater than 0');
     }
 
-    // Check if user exists
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
     });
@@ -390,7 +387,6 @@ export class UsersService {
       throw new BadRequestException('Points must be greater than 0');
     }
 
-    // Check if user exists and has enough points
     const user = await this.prisma.users.findUnique({
       where: { id: userId },
     });

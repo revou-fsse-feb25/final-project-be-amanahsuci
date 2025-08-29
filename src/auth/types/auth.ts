@@ -31,3 +31,10 @@ export interface RegisterDto {
     password: string;
     confirmPassword: string;
 }
+
+export interface JwtUser {
+    id: number;
+    email: string;
+    name: string;
+    role: Role;
+}
