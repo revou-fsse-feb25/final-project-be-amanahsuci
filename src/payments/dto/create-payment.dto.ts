@@ -32,4 +32,8 @@ export class CreatePaymentDto {
     @IsOptional()
     @IsEnum(PaymentMethod)
     status?: string;
+
+    @IsOptional()
+    @IsNumber()
+    amount?: number;
 }

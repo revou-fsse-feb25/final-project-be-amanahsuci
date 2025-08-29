@@ -4,7 +4,8 @@ import {
     IsEnum, 
     IsOptional, 
     IsDateString, 
-    IsPositive 
+    IsPositive,
+    IsString 
 } from 'class-validator';
 import { Type } from 'class-transformer';
 import { PointType } from '@prisma/client';

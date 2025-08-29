@@ -5,46 +5,52 @@ import { ConflictException, NotFoundException, BadRequestException } from '@nest
 
 describe('TheatersService', () => {
   let service: TheatersService;
-  let prisma: jest.Mocked<PrismaService>;
+  let prisma: {
+    theaters: any;
+    cinemas: any;
+    seats: any;
+    bookings: any;
+  };
 
   beforeEach(async () => {
+    prisma = {
+      theaters: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      cinemas: {
+        findFirst: jest.fn(),
+        create: jest.fn(),
+        findMany: jest.fn(),
+        count: jest.fn(),
+        findUnique: jest.fn(),
+        update: jest.fn(),
+        delete: jest.fn(),
+      },
+      seats: {
+        deleteMany: jest.fn(),
+      },
+      bookings: {
+        count: jest.fn(),
+      },
+    };
+
     const module: TestingModule = await Test.createTestingModule({
       providers: [
         TheatersService,
         {
           provide: PrismaService,
-          useValue: {
-            theaters: {
-              findFirst: jest.fn(),
-              create: jest.fn(),
-              findMany: jest.fn(),
-              count: jest.fn(),
-              findUnique: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
-            },
-            cinemas: {
-              findFirst: jest.fn(),
-              create: jest.fn(),
-              findMany: jest.fn(),
-              count: jest.fn(),
-              findUnique: jest.fn(),
-              update: jest.fn(),
-              delete: jest.fn(),
-            },
-            seats: {
-              deleteMany: jest.fn(),
-            },
-            bookings: {
-              count: jest.fn(),
-            },
-          },
+          useValue: prisma,
         },
       ],
     }).compile();
 
     service = module.get<TheatersService>(TheatersService);
-    prisma = module.get(PrismaService);
   });
 
   describe('createTheater', () => {
@@ -58,7 +64,10 @@ describe('TheatersService', () => {
 
     it('should throw ConflictException if theater exists', async () => {
       prisma.theaters.findFirst.mockResolvedValue({ id: 1, name: 'Grand', location: 'City' });
-      await expect(service.createTheater({ name: 'Grand', location: 'City' })).rejects.toThrow(ConflictException);
+
+      await expect(
+        service.createTheater({ name: 'Grand', location: 'City' }),
+      ).rejects.toThrow(ConflictException);
     });
   });
 
@@ -72,20 +81,22 @@ describe('TheatersService', () => {
       prisma.theaters.count.mockResolvedValue(1);
 
       const result = await service.findAllTheaters(1, 10);
-      expect(result.meta.total).toBe(1);
       expect(result.data[0].name).toBe('Grand');
+      expect(result.meta.total).toBe(1);
     });
   });
 
   describe('findTheaterById', () => {
     it('should return theater by id', async () => {
       prisma.theaters.findUnique.mockResolvedValue({ id: 1, name: 'Grand', location: 'City' });
+
       const result = await service.findTheaterById(1);
       expect(result.id).toBe(1);
     });
 
     it('should throw NotFoundException if not exists', async () => {
       prisma.theaters.findUnique.mockResolvedValue(null);
+
       await expect(service.findTheaterById(1)).rejects.toThrow(NotFoundException);
     });
   });
@@ -101,6 +112,7 @@ describe('TheatersService', () => {
 
     it('should throw NotFoundException if not found', async () => {
       prisma.theaters.findUnique.mockResolvedValue(null);
+
       await expect(service.updateTheater(99, { name: 'X' })).rejects.toThrow(NotFoundException);
     });
   });
@@ -116,11 +128,13 @@ describe('TheatersService', () => {
 
     it('should throw NotFoundException if not found', async () => {
       prisma.theaters.findUnique.mockResolvedValue(null);
+
       await expect(service.removeTheater(1)).rejects.toThrow(NotFoundException);
     });
 
     it('should throw BadRequestException if theater has cinemas', async () => {
       prisma.theaters.findUnique.mockResolvedValue({ id: 1, _count: { cinemas: 2 } });
+
       await expect(service.removeTheater(1)).rejects.toThrow(BadRequestException);
     });
   });
