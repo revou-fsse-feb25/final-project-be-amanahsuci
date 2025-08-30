@@ -25,8 +25,8 @@ async function bootstrap() {
   });
 
   const config = new DocumentBuilder()
-    .setTitle('RevoBank API') 
-    .setDescription('API documentation for RevoBank backend')
+    .setTitle('TICS Cinema API') 
+    .setDescription('API documentation for TICS Cinema backend')
     .setVersion('1.0')
     .addBearerAuth() 
     .build();
