@@ -281,7 +281,7 @@ async function main() {
         }
     }
 
-    const sampleBookings: Array<{ id: number; showtime_id: number; payment_status: 'pending' | 'complete' | 'cancelled'; created_at: Date }> = [];
+    const sampleBookings: Array<{ id: number; showtime_id: number; payment_status: 'pending' | 'completed' | 'cancelled'; created_at: Date }> = [];
 
     for (let i = 0; i < 15; i++) {
         const randomUser = users[Math.floor(Math.random() * users.length)];
@@ -292,21 +292,21 @@ async function main() {
         const numSeats = Math.floor(Math.random() * 4) + 1;
         const totalPrice = cinema.price * numSeats;
         const r = Math.random();
-        const paymentStatus = r > 0.2 ? 'complete' : r > 0.1 ? 'pending' : 'cancelled';
+        const paymentStatus = r > 0.2 ? 'completed' : r > 0.1 ? 'pending' : 'cancelled';
 
         const booking = await prisma.bookings.create({
             data: {
                 user_id: randomUser.id,
                 showtime_id: randomShowtime.id,
                 total_price: totalPrice,
-                payment_status: paymentStatus,
+                payment_status: 'pending',
                 created_at: new Date(Date.now() - Math.random() * 30 * 24 * 60 * 60 * 1000),
             },
             select: { 
                 id: true, showtime_id: true, payment_status: true, created_at: true 
             },
         });
-        sampleBookings.push(booking);
+        sampleBookings.push();  // before .push(booking)
 
         const totalSeatsInCinema = cinema.rows * cinema.seatsPerRow;
         const randomStart = Math.max(0, Math.floor(Math.random() * Math.max(1, totalSeatsInCinema - numSeats)));
@@ -335,7 +335,7 @@ async function main() {
                 data: {
                     booking_id: booking.id,
                     seat_id: seat.id,
-                    status: booking.payment_status === 'complete' ? 'booked' : 'selected',
+                    status: booking.payment_status === 'completed' ? 'booked' : 'selected',
                 },
             });
         }
@@ -346,11 +346,11 @@ async function main() {
                 booking_id: booking.id,
                 method: paymentMethods[Math.floor(Math.random() * paymentMethods.length)],
                 status: booking.payment_status,
-                paid_at: booking.payment_status === 'complete' ? booking.created_at : null,
+                paid_at: booking.payment_status === 'completed' ? booking.created_at : null,
             },
         });
 
-        if (booking.payment_status === 'complete') {
+        if (booking.payment_status === 'completed') {
             const pointsEarned = Math.floor(totalPrice / 1000);
             await prisma.points_Transactions.create({
                 data: {

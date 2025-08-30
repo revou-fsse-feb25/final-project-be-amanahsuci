@@ -343,7 +343,7 @@ export class CinemasService {
       const bookings = await this.prisma.bookings.findMany({
         where: {
           showtime_id: showtimeId,
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
         include: {
           booking_seats: {
@@ -409,7 +409,7 @@ export class CinemasService {
           showtime: {
             cinema_id: cinemaId,
           },
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
       }),
       this.prisma.bookings.aggregate({
@@ -417,7 +417,7 @@ export class CinemasService {
           showtime: {
             cinema_id: cinemaId,
           },
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
         _sum: {
           total_price: true,

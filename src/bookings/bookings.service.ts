@@ -54,7 +54,7 @@ export class BookingsService {
     const existingBookings = await this.prisma.bookings.findMany({
       where: {
         showtime_id,
-        payment_status: 'complete',
+        payment_status: 'completed',
       },
       include: {
         booking_seats: {
@@ -312,7 +312,7 @@ export class BookingsService {
       throw new BadRequestException('Cannot cancel booking for past showtime');
     }
 
-    if (booking.payment_status === 'complete') {
+    if (booking.payment_status === 'completed') {
       throw new BadRequestException('Cannot cancel completed booking');
     }
 
@@ -375,7 +375,7 @@ export class BookingsService {
       const updatedBooking = await prisma.bookings.update({
         where: { id: bookingId },
         data: {
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
       });
 
@@ -455,7 +455,7 @@ export class BookingsService {
       this.prisma.bookings.count({
         where: {
           ...whereCondition,
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
       }),
       this.prisma.bookings.count({
@@ -473,7 +473,7 @@ export class BookingsService {
       this.prisma.bookings.aggregate({
         where: {
           ...whereCondition,
-          payment_status: 'complete',
+          payment_status: 'completed',
         },
         _sum: {
           total_price: true,
